@@ -193,6 +193,16 @@ docker compose logs -f airflow-webserver
     docker compose run --rm airflow-init
     docker compose up -d postgres airflow-webserver airflow-scheduler
     ```
+- **`dbt debug` fails with `Error from git --help`**
+  - Cause: `dbt debug` expects `git` to be available inside the Airflow container.
+  - Fix in this repo: Airflow image now installs `git` in `airflow/Dockerfile`.
+  - Apply the fix locally by rebuilding and restarting:
+    ```bash
+    docker compose down -v
+    docker compose build --no-cache
+    docker compose run --rm airflow-init
+    docker compose up -d postgres airflow-webserver airflow-scheduler
+    ```
 
 ---
 

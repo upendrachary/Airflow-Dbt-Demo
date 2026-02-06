@@ -183,6 +183,16 @@ docker compose logs -f airflow-webserver
 - **DAG missing in UI**
   - Confirm file exists: `dags/dbt_learning_dag.py`.
   - Restart scheduler: `docker compose restart airflow-scheduler`.
+- **`Could not read served logs: 403 FORBIDDEN`**
+  - Cause: Airflow webserver and scheduler did not share the same `webserver.secret_key`.
+  - Fix (already configured in this repo): `AIRFLOW__WEBSERVER__SECRET_KEY` is now pinned in `docker-compose.yml`.
+  - If you ran old containers before this fix, reset and start fresh:
+    ```bash
+    docker compose down -v
+    docker compose build
+    docker compose run --rm airflow-init
+    docker compose up -d postgres airflow-webserver airflow-scheduler
+    ```
 
 ---
 

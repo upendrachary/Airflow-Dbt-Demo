@@ -7,6 +7,8 @@ x-airflow-common: &airflow-common
     AIRFLOW__CORE__EXECUTOR: LocalExecutor
     AIRFLOW__CORE__LOAD_EXAMPLES: "False"
     AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__FERNET_KEY: 2hP7n6Q9uL5rX8wS1kJ3mN4tV7yB0cD2fG6hJ9kL2mQ=
+    AIRFLOW__WEBSERVER__SECRET_KEY: airflow-dbt-demo-local-secret
     AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "True"
     DBT_PROFILES_DIR: /opt/airflow/dbt/profiles
   volumes:

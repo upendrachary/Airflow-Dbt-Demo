@@ -1,0 +1,9 @@
+version: 2
+
+models:
+  - name: hello_dbt
+    description: "Simple model to validate dbt + Airflow orchestration"
+    columns:
+      - name: message
+        tests:
+          - not_null

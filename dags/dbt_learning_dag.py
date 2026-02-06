@@ -52,3 +52,4 @@ with DAG(
     )
 
     create_raw_events >> load_new_events >> dbt_debug >> dbt_run >> dbt_test
+    dbt_debug >> dbt_run >> dbt_test

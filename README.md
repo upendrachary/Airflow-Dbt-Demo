@@ -32,6 +32,7 @@ Great idea. This repo is now set up so you can **learn Airflow and dbt by runnin
 - Docker Desktop installed and running.
 - At least ~4 GB RAM allocated to Docker Desktop.
 - Ports available on your machine:
+  - `8081` for Airflow UI
   - `8080` for Airflow UI
   - `5432` for PostgreSQL
 
@@ -96,6 +97,7 @@ docker compose ps
 
 Open Airflow UI:
 
+- URL: http://localhost:8081
 - URL: http://localhost:8080
 - Username: `admin`
 - Password: `admin`

@@ -1,0 +1,70 @@
+version: "3.9"
+
+x-airflow-common: &airflow-common
+  build:
+    context: ./airflow
+  environment:
+    AIRFLOW__CORE__EXECUTOR: LocalExecutor
+    AIRFLOW__CORE__LOAD_EXAMPLES: "False"
+    AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CORE__FERNET_KEY: 2hP7n6Q9uL5rX8wS1kJ3mN4tV7yB0cD2fG6hJ9kL2mQ=
+    AIRFLOW__WEBSERVER__SECRET_KEY: airflow-dbt-demo-local-secret
+    AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "True"
+    DBT_PROFILES_DIR: /opt/airflow/dbt/profiles
+  volumes:
+    - ./dags:/opt/airflow/dags
+    - ./dbt/demo_project:/opt/airflow/dbt
+  depends_on:
+    - postgres
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+      - ./postgres-init:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+
+  airflow-init:
+    <<: *airflow-common
+    command: >
+      bash -c "
+      airflow db migrate &&
+      airflow users create
+      --username admin
+      --password admin
+      --firstname Airflow
+      --lastname Admin
+      --role Admin
+      --email admin@example.com
+      "
+
+  airflow-webserver:
+    <<: *airflow-common
+    command: webserver
+    ports:
+      - "8081:8080"
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+
+  dbt:
+    image: ghcr.io/dbt-labs/dbt-postgres:1.8.2
+    working_dir: /usr/app
+    environment:
+      DBT_PROFILES_DIR: /usr/app/profiles
+    volumes:
+      - ./dbt/demo_project:/usr/app
+    depends_on:
+      - postgres
+    profiles:
+      - tools
+
+volumes:
+  postgres-db-volume:

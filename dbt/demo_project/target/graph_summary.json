@@ -1,0 +1,1 @@
+{"_invocation_id": "f17e0d3d-99c4-467c-bf9a-98c397c45e7e", "linked": {"0": {"name": "model.demo_project.hello_dbt", "type": "model", "succ": [1]}, "1": {"name": "test.demo_project.not_null_hello_dbt_message.d7182b8860", "type": "test"}}}

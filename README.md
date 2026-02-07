@@ -3,6 +3,7 @@
 Great idea. This repo is now set up so you can **learn Airflow and dbt by running everything locally** with Docker Desktop.
 
 ## What you get in this project
+## What you get in this PR
 
 - Airflow services in Docker (`webserver`, `scheduler`, `init`) using a custom Airflow image with dbt installed.
 - PostgreSQL in Docker for both:
@@ -18,6 +19,11 @@ Great idea. This repo is now set up so you can **learn Airflow and dbt by runnin
   - a hello model
   - an incremental fact model (`fct_events`)
   - tests on the output
+- A beginner DAG that runs dbt step-by-step:
+  1. `dbt debug`
+  2. `dbt run`
+  3. `dbt test`
+- A minimal dbt project (`demo_project`) with one model and one test.
 
 ---
 
@@ -27,6 +33,7 @@ Great idea. This repo is now set up so you can **learn Airflow and dbt by runnin
 - At least ~4 GB RAM allocated to Docker Desktop.
 - Ports available on your machine:
   - `8081` for Airflow UI
+  - `8080` for Airflow UI
   - `5432` for PostgreSQL
 
 ---
@@ -91,6 +98,7 @@ docker compose ps
 Open Airflow UI:
 
 - URL: http://localhost:8081
+- URL: http://localhost:8080
 - Username: `admin`
 - Password: `admin`
 
@@ -125,6 +133,7 @@ This simulates a tiny real-time pipeline: Airflow loads new events, dbt transfor
 ---
 
 ## Verify output in PostgreSQL (recommended)
+## Verify dbt output in PostgreSQL (optional but recommended)
 
 Run this from your terminal:
 
@@ -137,6 +146,12 @@ docker compose exec postgres psql -U airflow -d analytics -c "select count(*) fr
 
 docker compose exec postgres psql -U airflow -d analytics -c "select * from fct_events order by occurred_at desc limit 5;"
 ```
+
+docker compose exec postgres psql -U airflow -d analytics -c "select * from hello_dbt;"
+```
+
+You should see one row with message:
+`hello from dbt running in Docker Desktop`
 
 ---
 

@@ -2,12 +2,23 @@
 
 Great idea. This repo is now set up so you can **learn Airflow and dbt by running everything locally** with Docker Desktop.
 
+## What you get in this project
 ## What you get in this PR
 
 - Airflow services in Docker (`webserver`, `scheduler`, `init`) using a custom Airflow image with dbt installed.
 - PostgreSQL in Docker for both:
   - Airflow metadata database (`airflow` DB), and
   - dbt target database (`analytics` DB).
+- A beginner DAG that simulates a tiny “real-time” pipeline:
+  1. create a raw events table
+  2. insert new events
+  3. `dbt debug`
+  4. `dbt run`
+  5. `dbt test`
+- A minimal dbt project with:
+  - a hello model
+  - an incremental fact model (`fct_events`)
+  - tests on the output
 - A beginner DAG that runs dbt step-by-step:
   1. `dbt debug`
   2. `dbt run`
@@ -39,6 +50,7 @@ Great idea. This repo is now set up so you can **learn Airflow and dbt by runnin
 │   └── demo_project/
 │       ├── dbt_project.yml
 │       ├── models/
+│       │   ├── fct_events.sql
 │       │   ├── hello_dbt.sql
 │       │   └── schema.yml
 │       └── profiles/
@@ -96,6 +108,8 @@ Open Airflow UI:
 2. Turn it ON.
 3. Click **Trigger DAG**.
 4. Open Graph view and inspect task logs in this order:
+   - `create_raw_events`
+   - `load_new_events`
    - `dbt_debug`
    - `dbt_run`
    - `dbt_test`
@@ -104,11 +118,33 @@ You should see successful dbt execution in logs.
 
 ---
 
+## What this DAG builds (plain language)
+
+- **`raw_events`**: a raw table created by Airflow and filled with a few new rows each run.
+- **`fct_events`**: an incremental dbt model that copies new raw events into a fact table.
+- **Tests** ensure:
+  - `event_id` is unique and not null,
+  - `occurred_at` is not null.
+
+This simulates a tiny real-time pipeline: Airflow loads new events, dbt transforms and tests them.
+
+---
+
+## Verify output in PostgreSQL (recommended)
 ## Verify dbt output in PostgreSQL (optional but recommended)
 
 Run this from your terminal:
 
 ```bash
+docker compose exec postgres psql -U airflow -d analytics -c "select count(*) from raw_events;"
+
+docker compose exec postgres psql -U airflow -d analytics -c "select count(*) from fct_events;"
+
+# optional: see the last 5 rows
+
+docker compose exec postgres psql -U airflow -d analytics -c "select * from fct_events order by occurred_at desc limit 5;"
+```
+
 docker compose exec postgres psql -U airflow -d analytics -c "select * from hello_dbt;"
 ```
 

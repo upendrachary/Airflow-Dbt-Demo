@@ -1,9 +1,27 @@
 version: 2
 
+sources:
+  - name: app
+    schema: public
+    tables:
+      - name: raw_events
+        description: "Raw events loaded by Airflow"
+
 models:
   - name: hello_dbt
     description: "Simple model to validate dbt + Airflow orchestration"
     columns:
       - name: message
+        tests:
+          - not_null
+
+  - name: fct_events
+    description: "Incremental fact table built from raw_events"
+    columns:
+      - name: event_id
+        tests:
+          - not_null
+          - unique
+      - name: occurred_at
         tests:
           - not_null

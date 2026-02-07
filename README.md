@@ -18,6 +18,9 @@ Great idea. This repo is now set up so you can **learn Airflow and dbt by runnin
 - A minimal dbt project with:
   - a hello model
   - an incremental fact model (`fct_events`)
+  - a dimension model (`dim_event_types`)
+  - a join model (`fct_events_enriched`)
+  - tests on the output
   - tests on the output
 - A beginner DAG that runs dbt step-by-step:
   1. `dbt debug`
@@ -51,6 +54,9 @@ Great idea. This repo is now set up so you can **learn Airflow and dbt by runnin
 │   └── demo_project/
 │       ├── dbt_project.yml
 │       ├── models/
+│       │   ├── dim_event_types.sql
+│       │   ├── fct_events.sql
+│       │   ├── fct_events_enriched.sql
 │       │   ├── fct_events.sql
 │       │   ├── hello_dbt.sql
 │       │   └── schema.yml
@@ -124,6 +130,14 @@ You should see successful dbt execution in logs.
 
 - **`raw_events`**: a raw table created by Airflow and filled with a few new rows each run.
 - **`fct_events`**: an incremental dbt model that copies new raw events into a fact table.
+- **`dim_event_types`**: a small dimension table listing each event type with a friendly label.
+- **`fct_events_enriched`**: a join model that combines fact events with their type labels.
+- **Tests** ensure:
+  - `event_id` is unique and not null,
+  - `occurred_at` is not null,
+  - event type labels are present.
+
+This simulates a tiny real-time pipeline: Airflow loads new events, dbt transforms and tests them, then enriches them with a dimension table.
 - **Tests** ensure:
   - `event_id` is unique and not null,
   - `occurred_at` is not null.
@@ -141,6 +155,15 @@ Run this from your terminal:
 docker compose exec postgres psql -U airflow -d analytics -c "select count(*) from raw_events;"
 
 docker compose exec postgres psql -U airflow -d analytics -c "select count(*) from fct_events;"
+
+docker compose exec postgres psql -U airflow -d analytics -c "select count(*) from dim_event_types;"
+
+docker compose exec postgres psql -U airflow -d analytics -c "select count(*) from fct_events_enriched;"
+
+# optional: see the last 5 rows
+
+docker compose exec postgres psql -U airflow -d analytics -c "select * from fct_events_enriched order by occurred_at desc limit 5;"
+```
 
 # optional: see the last 5 rows
 

@@ -50,8 +50,10 @@ Great idea. This repo is now set up so you can **learn Airflow and dbt by runnin
 │   └── requirements.txt
 ├── dags/
 │   └── dbt_learning_dag.py
+│   └── insurance_claims_snowflake_dag.py
 ├── dbt/
 │   └── demo_project/
+│   └── insurance_claims/
 │       ├── dbt_project.yml
 │       ├── models/
 │       │   ├── dim_event_types.sql
@@ -62,6 +64,9 @@ Great idea. This repo is now set up so you can **learn Airflow and dbt by runnin
 │       │   └── schema.yml
 │       └── profiles/
 │           └── profiles.yml
+├── scripts/
+│   └── insurance_demo/
+│       └── generate_insurance_csv.py
 ├── postgres-init/
 │   └── 01-create-analytics-db.sql
 └── docker-compose.yml
@@ -143,6 +148,81 @@ This simulates a tiny real-time pipeline: Airflow loads new events, dbt transfor
   - `occurred_at` is not null.
 
 This simulates a tiny real-time pipeline: Airflow loads new events, dbt transforms and tests them.
+
+---
+
+## Insurance Claims (Snowflake + S3) example
+
+This repo also includes a **real-world insurance claims analytics** pipeline that uses:
+
+**AWS S3 → Snowflake → dbt → Airflow**
+
+### What it builds
+
+**Raw tables**
+- `raw.policy`
+- `raw.member`
+- `raw.provider`
+- `raw.claim`
+- `raw.claim_line`
+
+**dbt layers**
+1. **Staging** (`stg_*`): type casting, cleanup
+2. **Core** (`dim_*`, `fact_*`): SCD2 customer dimension + incremental facts
+3. **Marts**: KPIs, provider outliers, member risk signals
+
+**Data quality checks**
+- not null + unique keys
+- relationships across facts/dims
+- accepted values for claim statuses
+- custom test: `paid_amt <= billed_amt`
+
+### Snowflake setup
+
+Use the SQL checklist in:
+
+```
+dbt/insurance_claims/docs/snowflake_setup.md
+```
+
+### Airflow connections required
+
+Create the following Airflow connections in the UI:
+
+1) **`aws_default`** (type: Amazon Web Services)
+   - Provide AWS access key + secret
+2) **`snowflake_default`** (type: Snowflake)
+   - Account, user, password, role, warehouse, database
+
+### Airflow environment variables
+
+Set these in your environment (or in `docker-compose.yml`):
+
+```bash
+INSURANCE_S3_BUCKET=your-s3-bucket
+INSURANCE_S3_PREFIX=insurance_claims
+INSURANCE_SNOWFLAKE_STAGE=RAW_S3_STAGE
+```
+
+### Run the DAG
+
+In Airflow UI, turn on **`insurance_claims_snowflake`** and trigger it.
+
+This DAG:
+1. Generates small CSVs and uploads to S3
+2. Runs Snowflake `COPY INTO` for raw tables
+3. Runs `dbt snapshot` (SCD2 dim_customer)
+4. Runs dbt staging/core models
+5. Runs dbt tests
+6. Runs dbt marts
+
+### Optional: generate CSVs locally
+
+```bash
+python scripts/insurance_demo/generate_insurance_csv.py
+```
+
+It writes CSV files to `./tmp/insurance_claims/` which can be uploaded to S3.
 
 ---
 

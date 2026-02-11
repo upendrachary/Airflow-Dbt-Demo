@@ -1,0 +1,33 @@
+name: insurance_claims
+version: 1.0.0
+config-version: 2
+
+profile: insurance_claims
+
+model-paths: ["models"]
+snapshot-paths: ["snapshots"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+analysis-paths: ["analysis"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+models:
+  insurance_claims:
+    staging:
+      +materialized: view
+      +schema: staging
+    core:
+      +materialized: table
+      +schema: core
+    marts:
+      +materialized: table
+      +schema: marts
+
+snapshots:
+  insurance_claims:
+    +target_schema: core
+    +strategy: check
+    +invalidate_hard_deletes: true

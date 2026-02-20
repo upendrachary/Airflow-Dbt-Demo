@@ -1,0 +1,115 @@
+version: 2
+
+sources:
+  - name: raw
+    database: "{{ env_var('SNOWFLAKE_DATABASE', 'INSURANCE') }}"
+    schema: raw
+    tables:
+      - name: policy
+      - name: member
+      - name: provider
+      - name: claim
+      - name: claim_line
+
+models:
+  - name: stg_policy
+    description: "Cleaned policy data."
+    columns:
+      - name: policy_id
+        tests:
+          - not_null
+          - unique
+  - name: stg_member
+    description: "Cleaned member data."
+    columns:
+      - name: member_id
+        tests:
+          - not_null
+          - unique
+  - name: stg_provider
+    description: "Cleaned provider data."
+    columns:
+      - name: provider_id
+        tests:
+          - not_null
+          - unique
+  - name: stg_claim
+    description: "Cleaned claim data."
+    columns:
+      - name: claim_id
+        tests:
+          - not_null
+          - unique
+      - name: status
+        tests:
+          - accepted_values:
+              values: ["APPROVED", "DENIED", "PENDING"]
+  - name: stg_claim_line
+    description: "Cleaned claim line data."
+    columns:
+      - name: claim_line_id
+        tests:
+          - not_null
+          - unique
+
+  - name: dim_customer
+    description: "SCD2 customer dimension from member snapshot."
+    columns:
+      - name: customer_id
+        tests:
+          - not_null
+  - name: dim_policy
+    description: "Policy dimension."
+    columns:
+      - name: policy_id
+        tests:
+          - not_null
+          - unique
+  - name: dim_provider
+    description: "Provider dimension."
+    columns:
+      - name: provider_id
+        tests:
+          - not_null
+          - unique
+
+  - name: fact_claim
+    description: "Incremental fact table for claims."
+    columns:
+      - name: claim_id
+        tests:
+          - not_null
+          - unique
+          - relationships:
+              to: ref('dim_policy')
+              field: policy_id
+          - relationships:
+              to: ref('dim_provider')
+              field: provider_id
+          - relationships:
+              to: ref('dim_customer')
+              field: customer_id
+      - name: paid_amt
+        tests:
+          - paid_not_exceed_billed:
+              billed_field: billed_amt
+              paid_field: paid_amt
+  - name: fact_claim_line
+    description: "Incremental fact table for claim lines."
+    columns:
+      - name: claim_line_id
+        tests:
+          - not_null
+          - unique
+      - name: claim_id
+        tests:
+          - relationships:
+              to: ref('fact_claim')
+              field: claim_id
+
+  - name: mart_claims_kpis_daily
+    description: "Daily claim KPIs."
+  - name: mart_provider_outliers
+    description: "Providers with unusual paid ratios or deny rates."
+  - name: mart_member_risk
+    description: "Members with high claim frequency."
